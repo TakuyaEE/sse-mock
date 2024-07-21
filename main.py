@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-
+from dummy_data import streaming_dummy_data, blocking_dummy_data
 app = FastAPI()
 
 
@@ -23,27 +23,16 @@ class RequestBody(BaseModel):
 
 
 async def return_dummy_stream():
-    dummy_response = [
-        {"streaming": "replace here 1"},
-        {"streaming": "replace here 2"},
-        {"streaming": "replace here 3"},
-        {"streaming": "replace here 4"},
-        {"streaming": "replace here 5"},
-        {"streaming": "replace here 6"},
-        {"streaming": "replace here 7"},
-        {"streaming": "replace here 8"},
-        {"streaming": "replace here 9"},
-    ]
-    for item in dummy_response:
-        await asyncio.sleep(1.0)
-        yield f"data:{json.dumps(item)}\n\n"
+    for item in streaming_dummy_data:
+        await asyncio.sleep(item["duration"])
+        yield f"data:{json.dumps(item["data"])}\n\n"
     yield f"data: [DONE]\n\n"
 
 
 @app.post("/v1/workflows/run")
 async def workflow(body: RequestBody):
     if body.response_mode == "blocking":
-        return json.dumps({"blocking": "replace here"})
+        return json.dumps(blocking_dummy_data)
     else:
         return StreamingResponse(
             content=return_dummy_stream(), media_type="text/event-stream"
